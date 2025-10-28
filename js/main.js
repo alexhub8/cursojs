@@ -1,410 +1,282 @@
-// CONFIGURACIÓN INICIAL
-// Tasas de interés según cantidad de cuotas.
-const TASAS_INTERES = {
-  3: 1.10,
-  6: 1.25,
-  12: 1.50,
-  24: 2.00
+// js/main.js
+// Usa: axios (peticiones) y dayjs (fechas)
+
+// Tabla simple de interés según cuotas
+const INTERES_POR_CUOTAS = {
+  3: 0.05,
+  6: 0.08,
+  12: 0.12,
+  24: 0.20
 };
 
-// Clave para identificar los datos guardados en localStorage
-const STORAGE_KEY = 'simulacionesPrestamo_v1';
-
-// FUNCIONES UTILITARIAS
-// Formatea un número a formato moneda con separador decimal local (Argentina)
-function formatearMoneda(valor){
-  return Number(valor).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2});
-}
-
-// Lee el historial de simulaciones guardadas en localStorage
-function leerHistorial(){
-  const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : []; // Devuelve un array vacío si no hay datos
-}
-
-// Guarda el historial actualizado en localStorage
-function guardarHistorial(historial){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(historial));
-}
-
-// Calcula los valores del préstamo según monto y cuotas seleccionadas
-function calcularPrestamo(monto, cuotas){
-  const tasa = TASAS_INTERES[cuotas] ?? null;
-  if(!tasa) throw new Error('Cantidad de cuotas inválida.');
-
-  const montoFinal = monto * tasa;           // Monto total a pagar
-  const valorCuota = montoFinal / cuotas;    // Valor por cuota
-  return { 
-    montoFinal: Number(montoFinal.toFixed(2)), 
-    valorCuota: Number(valorCuota.toFixed(2)), 
-    tasa 
-  };
-}
-
-// REFERENCIAS AL DOM
-const form = document.getElementById('simuladorForm');
+// --- ELEMENTOS DOM ---
+const simuladorForm = document.getElementById('simuladorForm');
+const nombreInput = document.getElementById('nombre');
+const montoInput = document.getElementById('monto');
+const cuotasSelect = document.getElementById('cuotas');
 const resultadoContainer = document.getElementById('resultadoContainer');
 const historialList = document.getElementById('historialList');
 const limpiarBtn = document.getElementById('limpiarBtn');
 
-// Agregar dinámicamente un botón para exportar historial
-const exportarBtn = document.createElement('button');
-exportarBtn.type = 'button';
-exportarBtn.textContent = 'Exportar historial';
-exportarBtn.id = 'exportarBtn';
-document.querySelector('.actions').appendChild(exportarBtn);
-
-// FUNCIONES DE INTERFAZ
-// Muestra el resultado de la simulación actual en pantalla
-function mostrarResultado(nombre, monto, cuotas, resultado){
-  resultadoContainer.innerHTML = `
-    <div class="resultado">
-      <p><strong>${nombre}</strong>, solicitaste <strong>$${formatearMoneda(monto)}</strong> en <strong>${cuotas} cuotas</strong>.</p>
-      <p class="smallMuted">Tasa aplicada: x${resultado.tasa} — Monto final: <strong>$${formatearMoneda(resultado.montoFinal)}</strong></p>
-      <p><strong>Valor por cuota:</strong> $${formatearMoneda(resultado.valorCuota)}</p>
-    </div>
-  `;
-}
-
-// Renderiza (dibuja) el historial de simulaciones guardadas
-function renderizarHistorial(){
-  const historial = leerHistorial();
-  historialList.innerHTML = '';
-
-  // Si no hay datos guardados, muestra un mensaje
-  if(historial.length === 0){
-    historialList.innerHTML = '<li class="placeholder smallMuted">No hay simulaciones guardadas.</li>';
-    return;
-  }
-
-  // Recorre el historial y genera cada item del listado
-  historial.forEach((sim, index) => {
-    const li = document.createElement('li');
-    li.className = 'histItem';
-    li.dataset.index = index;
-    li.innerHTML = `
-      <div class="histMeta">
-        <div><strong>${sim.nombre}</strong> — $${formatearMoneda(sim.monto)} / ${sim.cuotas} cuotas</div>
-        <div class="smallMuted">Total: $${formatearMoneda(sim.montoFinal)} / cuota: $${formatearMoneda(sim.valorCuota)}</div>
-      </div>
-      <div class="histActions">
-        <button class="removeBtn" data-index="${index}" title="Eliminar">Eliminar</button>
-      </div>
-    `;
-    historialList.appendChild(li);
-  });
-}
-
-// Agrega una nueva simulación al historial y actualiza el listado
-function agregarSimulacionAlHistorial(simulacion){
-  const historial = leerHistorial();
-  historial.unshift(simulacion); // Agrega al inicio del array
-  guardarHistorial(historial);
-  renderizarHistorial();
-}
-
-// EVENTOS PRINCIPALES DEL FORMULARIO
-// Envío del formulario principal
-form.addEventListener('submit', function(event){
-  event.preventDefault(); // Evita recargar la página
-
-  try{
-    const nombre = form.nombre.value.trim() || 'Anonimo';
-    const monto = Number(form.monto.value);
-    const cuotas = Number(form.cuotas.value);
-
-    // Validaciones básicas de entrada
-    if(!nombre || isNaN(monto) || monto <= 0 || ![3,6,12,24].includes(cuotas)){
-      resultadoContainer.innerHTML = '<p class="placeholder smallMuted">Por favor complete correctamente todos los campos.</p>';
-      return;
-    }
-
-    // Cálculo del préstamo y muestra de resultados
-    const resultado = calcularPrestamo(monto, cuotas);
-    mostrarResultado(nombre, monto, cuotas, resultado);
-
-    // Guarda la simulación en el historial
-    const simulacion = {
-      id: Date.now(),
-      fecha: new Date().toISOString(),
-      nombre,
-      monto,
-      cuotas,
-      montoFinal: resultado.montoFinal,
-      valorCuota: resultado.valorCuota,
-      tasa: resultado.tasa
-    };
-    agregarSimulacionAlHistorial(simulacion);
-
-    // Limpieza de campos del formulario
-    form.monto.value = '';
-    form.cuotas.value = '';
-  }catch(err){
-    resultadoContainer.innerHTML = `<p class="placeholder smallMuted">Ocurrió un error: ${err.message}</p>`;
-  }
-});
-
-// Evento: eliminar simulación individual desde el historial
-historialList.addEventListener('click', function(e){
-  const btn = e.target.closest('.removeBtn');
-  if(!btn) return;
-
-  const index = Number(btn.dataset.index);
-  const historial = leerHistorial();
-
-  if(index >= 0 && index < historial.length){
-    historial.splice(index,1); // Elimina por índice
-    guardarHistorial(historial);
-    renderizarHistorial();
-  }
-});
-
-// Evento: limpiar todo el historial
-limpiarBtn.addEventListener('click', function(){
-  if(confirm('¿Eliminar todo el historial de simulaciones?')){
-    localStorage.removeItem(STORAGE_KEY);
-    renderizarHistorial();
-    resultadoContainer.innerHTML = '<p class="placeholder smallMuted">Historial eliminado.</p>';
-  }
-});
-
-// Evento: exportar el historial en formato JSON descargable
-exportarBtn.addEventListener('click', function(){
-  const historial = leerHistorial();
-  if(historial.length === 0){
-    alert('No hay historial para exportar.');
-    return;
-  }
-
-  // Crea un archivo JSON con los datos
-  const blob = new Blob([JSON.stringify(historial, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-
-  // Crea un enlace temporal para descargar el archivo
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'historial.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-});
-
-// Renderiza el historial al iniciar la página
-renderizarHistorial();
-
-// FUNCIONES DE PRUEBAS AUTOMÁTICAS
-// Ejecuta pruebas simples para validar funcionamiento básico del código
-function ejecutarPruebas(){
-  const pruebas = [];
-
-  // Prueba 1: cálculo de préstamo
-  try{
-    const r = calcularPrestamo(1000,3);
-    if(r.montoFinal === 1100 && r.valorCuota === 366.67){
-      pruebas.push('Prueba 1 OK');
-    }else{
-      pruebas.push('Prueba 1 FALLÓ');
-    }
-  }catch(e){
-    pruebas.push('Prueba 1 ERROR: ' + e.message);
-  }
-
-  // Prueba 2: lectura de historial
-  try{
-    const h = leerHistorial();
-    if(Array.isArray(h)){
-      pruebas.push('Prueba 2 OK');
-    }else{
-      pruebas.push('Prueba 2 FALLÓ');
-    }
-  }catch(e){
-    pruebas.push('Prueba 2 ERROR: ' + e.message);
-  }
-
-  // Muestra los resultados de las pruebas en el pie de página
-  const foot = document.querySelector('.foot');
-  const ul = document.createElement('ul');
-  ul.className = 'smallMuted';
-  pruebas.forEach(p=>{
-    const li = document.createElement('li');
-    li.textContent = p;
-    ul.appendChild(li);
-  });
-  foot.appendChild(ul);
-}
-
-// SECCIÓN: COTIZACIÓN DEL DÓLAR
+// Cotizaciones
 const dolarInfo = document.getElementById('dolarInfo');
+const euroInfo = document.getElementById('euroInfo');
+
 const tipoDolarSelect = document.getElementById('tipoDolar');
 const pesosInput = document.getElementById('pesos');
 const convertirBtn = document.getElementById('convertirBtn');
 const conversionResultado = document.getElementById('conversionResultado');
-
 const dolaresInput = document.getElementById('dolares');
 const convertirAPesosBtn = document.getElementById('convertirAPesosBtn');
 const conversionAPesosResultado = document.getElementById('conversionAPesosResultado');
 
-// Objeto para almacenar las cotizaciones actuales
-let cotizaciones = { oficial: 0, blue: 0 };
-
-// Consulta la API dolarapi.com para obtener las cotizaciones actualizadas
-async function obtenerCotizaciones() {
-  try {
-    const [oficialRes, blueRes] = await Promise.all([
-      fetch('https://dolarapi.com/v1/dolares/oficial'),
-      fetch('https://dolarapi.com/v1/dolares/blue')
-    ]);
-
-    const oficial = await oficialRes.json();
-    const blue = await blueRes.json();
-
-    cotizaciones.oficial = oficial.venta;
-    cotizaciones.blue = blue.venta;
-
-    // Muestra las cotizaciones en pantalla
-    dolarInfo.innerHTML = `
-      <p><strong>Dólar Oficial:</strong> $${oficial.venta.toFixed(2)} ARS</p>
-      <p><strong>Dólar Blue:</strong> $${blue.venta.toFixed(2)} ARS</p>
-      <p class="smallMuted">Última actualización: ${new Date(oficial.fechaActualizacion).toLocaleString()}</p>
-    `;
-  } catch (error) {
-    dolarInfo.innerHTML = `<p style="color:red;">No se pudieron obtener las cotizaciones.</p>`;
-    console.error('Error al obtener las cotizaciones:', error);
-  }
-}
-
-// Conversión de pesos a dólares
-convertirBtn.addEventListener('click', () => {
-  const pesos = parseFloat(pesosInput.value);
-  const tipo = tipoDolarSelect.value;
-  const cotizacion = cotizaciones[tipo];
-
-  // Validaciones de entrada y disponibilidad
-  if (!cotizacion) {
-    conversionResultado.innerHTML = `<p style="color:red;">Esperando cotizaciones...</p>`;
-    return;
-  }
-  if (isNaN(pesos) || pesos <= 0) {
-    conversionResultado.innerHTML = `<p style="color:red;">Ingresa un monto válido en pesos.</p>`;
-    return;
-  }
-
-  // Cálculo y visualización del resultado
-  const dolares = pesos / cotizacion;
-  conversionResultado.innerHTML = `
-    <p>${pesos.toFixed(2)} ARS equivalen a <strong>${dolares.toFixed(2)} USD</strong></p>
-    <p class="smallMuted">Usando cotización ${tipo} de $${cotizacion.toFixed(2)} ARS/USD</p>
-  `;
-});
-
-// Conversión de dólares a pesos
-convertirAPesosBtn.addEventListener('click', () => {
-  const dolares = parseFloat(dolaresInput.value);
-  const tipo = tipoDolarSelect.value;
-  const cotizacion = cotizaciones[tipo];
-
-  if (!cotizacion) {
-    conversionAPesosResultado.innerHTML = `<p style="color:red;">Esperando cotizaciones...</p>`;
-    return;
-  }
-  if (isNaN(dolares) || dolares <= 0) {
-    conversionAPesosResultado.innerHTML = `<p style="color:red;">Ingresa un monto válido en dólares.</p>`;
-    return;
-  }
-
-  const pesos = dolares * cotizacion;
-  conversionAPesosResultado.innerHTML = `
-    <p>${dolares.toFixed(2)} USD equivalen a <strong>${pesos.toFixed(2)} ARS</strong></p>
-    <p class="smallMuted">Usando cotización ${tipo} de $${cotizacion.toFixed(2)} ARS/USD</p>
-  `;
-});
-
-// Cargar cotizaciones del dólar al iniciar
-obtenerCotizaciones();
-
-// SECCIÓN: COTIZACIÓN DEL EURO
-const euroInfo = document.getElementById('euroInfo');
 const tipoEuroSelect = document.getElementById('tipoEuro');
 const pesosEuroInput = document.getElementById('pesosEuro');
 const convertirEuroBtn = document.getElementById('convertirEuroBtn');
 const conversionEuroResultado = document.getElementById('conversionEuroResultado');
-
 const eurosInput = document.getElementById('euros');
 const convertirAEurosBtn = document.getElementById('convertirAEurosBtn');
 const conversionAEurosResultado = document.getElementById('conversionAEurosResultado');
 
-let cotizacionesEuro = { oficial: 0, blue: 0 };
+// --- LOCAL STORAGE ---
+const STORAGE_KEY = 'simulaciones_v1';
 
-// Consulta la API bluelytics.com.ar para obtener cotizaciones del euro
-async function obtenerCotizacionesEuro() {
-  try {
-    const res = await fetch('https://api.bluelytics.com.ar/v2/latest');
-    const data = await res.json();
+// === FUNCIONES DE HISTORIAL ===
+function guardarSimulacion(sim) {
+  const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  arr.unshift(sim);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+}
 
-    const euroOficial = data.oficial_euro.value_sell;
-    const euroBlue = data.blue_euro.value_sell;
+function cargarHistorial() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+}
 
-    cotizacionesEuro.oficial = euroOficial;
-    cotizacionesEuro.blue = euroBlue;
+function renderHistorial() {
+  const arr = cargarHistorial();
+  historialList.innerHTML = '';
 
-    euroInfo.innerHTML = `
-      <p><strong>Euro Oficial:</strong> $${euroOficial.toFixed(2)} ARS</p>
-      <p><strong>Euro Blue:</strong> $${euroBlue.toFixed(2)} ARS</p>
-      <p class="smallMuted">Fuente: bluelytics.com.ar</p>
+  if (arr.length === 0) {
+    historialList.innerHTML = '<li class="placeholder">No hay simulaciones guardadas.</li>';
+    return;
+  }
+
+  arr.forEach((item, idx) => {
+    const li = document.createElement('li');
+    // No clase específica para el item: usamos los estilos del contenedor `.historialList`
+    li.innerHTML = `
+      <strong>${item.nombre}</strong> • ${item.cuotas} cuotas • Monto: $${Number(item.monto).toLocaleString()} 
+      • cuota: $${Number(item.valorCuota).toFixed(2)} • total: $${Number(item.total).toFixed(2)}
+      <div style="font-size:.9rem;color:var(--text-muted)">Fecha: ${item.fecha}</div>
+      <button data-idx="${idx}" class="btn btn-secondary eliminar">Eliminar</button>
     `;
-  } catch (error) {
-    euroInfo.innerHTML = `<p style="color:red;">No se pudieron obtener las cotizaciones del euro.</p>`;
-    console.error('Error al obtener las cotizaciones del euro:', error);
+    historialList.appendChild(li);
+  });
+
+  // Seleccionamos los botones eliminar dentro del contenedor del historial
+  document.querySelectorAll('#historialList .eliminar').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = Number(e.target.dataset.idx);
+      borrarItem(idx);
+    });
+  });
+}
+
+function borrarItem(index) {
+  const arr = cargarHistorial();
+  arr.splice(index, 1);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  renderHistorial();
+}
+
+// === EXPORTAR HISTORIAL JSON ===
+function exportarHistorialJSON() {
+  const historial = cargarHistorial();
+  if (!historial.length) {
+    alert('No hay simulaciones para exportar.');
+    return;
+  }
+
+  const fecha = dayjs().format('YYYY-MM-DD_HH-mm-ss');
+  const nombreArchivo = `historial_simulaciones_${fecha}.json`;
+  const blob = new Blob([JSON.stringify(historial, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombreArchivo;
+  enlace.click();
+
+  URL.revokeObjectURL(url);
+}
+
+// === AGREGAR BOTÓN DE EXPORTAR AL DOM ===
+function agregarBotonExportar() {
+  if (!document.getElementById('exportarBtn')) {
+    const exportarBtn = document.createElement('button');
+    exportarBtn.id = 'exportarBtn';
+  exportarBtn.className = 'btn btn-primary';
+    exportarBtn.textContent = 'Exportar historial (JSON)';
+    exportarBtn.style.marginLeft = '0rem';
+    limpiarBtn.insertAdjacentElement('afterend', exportarBtn);
+
+    exportarBtn.addEventListener('click', exportarHistorialJSON);
   }
 }
 
-// Conversión de pesos a euros
+limpiarBtn.addEventListener('click', () => {
+  if (confirm('¿Eliminar todo el historial?')) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderHistorial();
+    resultadoContainer.innerHTML = '<p class="placeholder">Historial eliminado.</p>';
+  }
+});
+
+// === SIMULADOR ===
+simuladorForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  calcularSimulacion();
+});
+
+function calcularSimulacion() {
+  const nombre = nombreInput.value.trim();
+  const monto = parseFloat(montoInput.value);
+  const cuotas = parseInt(cuotasSelect.value, 10);
+
+  if (!nombre || !monto || !cuotas) {
+    alert('Completa todos los campos correctamente.');
+    return;
+  }
+
+  const interes = INTERES_POR_CUOTAS[cuotas] ?? 0.15;
+  const total = monto * (1 + interes);
+  const valorCuota = total / cuotas;
+  const fecha = dayjs().format('YYYY-MM-DD HH:mm:ss');
+
+  const simulacion = { nombre, monto, cuotas, interes, total, valorCuota, fecha };
+  guardarSimulacion(simulacion);
+  renderResultado(simulacion);
+  renderHistorial();
+}
+
+function renderResultado(sim) {
+  resultadoContainer.innerHTML = `
+    <div class="resultadoContainer">
+      <p><strong>Simulación para:</strong> ${sim.nombre}</p>
+      <p><strong>Monto solicitado:</strong> $${Number(sim.monto).toLocaleString()}</p>
+      <p><strong>Cuotas:</strong> ${sim.cuotas}</p>
+      <p><strong>Interés aplicado:</strong> ${(sim.interes * 100).toFixed(2)}%</p>
+      <p><strong>Monto total a pagar:</strong> $${Number(sim.total).toFixed(2)}</p>
+      <p><strong>Valor por cuota:</strong> $${Number(sim.valorCuota).toFixed(2)}</p>
+      <p style="color:var(--text-muted);font-size:.9rem">Fecha: ${sim.fecha}</p>
+    </div>
+  `;
+}
+
+// === COTIZACIONES ===
+async function obtenerCotizaciones() {
+  try {
+    const resUSD = await axios.get('https://open.er-api.com/v6/latest/USD');
+    const resEUR = await axios.get('https://open.er-api.com/v6/latest/EUR');
+
+    const ratesUSD = resUSD.data?.rates;
+    const ratesEUR = resEUR.data?.rates;
+
+    if (!ratesUSD || !ratesEUR) throw new Error('Datos incompletos');
+
+    const usdToArs = ratesUSD.ARS;
+    const eurToArs = ratesEUR.ARS;
+    const usdToEur = ratesUSD.EUR;
+    const eurToUsd = ratesEUR.USD;
+
+    dolarInfo.innerHTML = `
+      <p>Dólar (USD → ARS): <strong>${usdToArs.toFixed(2)}</strong></p>
+      <p>USD → EUR: ${usdToEur.toFixed(4)}</p>
+      <p style="color:var(--text-muted);font-size:.9rem">Actualizado: ${dayjs().format('YYYY-MM-DD HH:mm:ss')}</p>
+    `;
+
+    euroInfo.innerHTML = `
+      <p>Euro (EUR → ARS): <strong>${eurToArs.toFixed(2)}</strong></p>
+      <p>EUR → USD: ${eurToUsd.toFixed(4)}</p>
+      <p style="color:var(--text-muted);font-size:.9rem">Actualizado: ${dayjs().format('YYYY-MM-DD HH:mm:ss')}</p>
+    `;
+
+    window._RATES = { usdToArs, eurToArs };
+  } catch (err) {
+    console.error('Error al obtener cotizaciones:', err);
+    dolarInfo.innerHTML = '<p class="placeholder">No se pudo obtener la cotización del dólar.</p>';
+    euroInfo.innerHTML = '<p class="placeholder">No se pudo obtener la cotización del euro.</p>';
+  }
+}
+
+// === CONVERSIONES ===
+convertirBtn.addEventListener('click', () => {
+  const pesos = Number(pesosInput.value);
+  const tipo = tipoDolarSelect.value;
+  const { usdToArs } = window._RATES || {};
+
+  if (!usdToArs) {
+    alert('No hay cotización cargada.');
+    return;
+  }
+
+  let tasa = usdToArs;
+  if (tipo === 'blue') tasa *= 1; //Posible ajuste para controlar la ganancia
+
+  const usd = pesos / tasa;
+  conversionResultado.innerHTML = `<p>${pesos} ARS ≈ ${usd.toFixed(4)} USD (${tipo})</p>`;
+});
+
+convertirAPesosBtn.addEventListener('click', () => {
+  const dolares = Number(dolaresInput.value);
+  const tipo = tipoDolarSelect.value;
+  const { usdToArs } = window._RATES || {};
+
+  if (!usdToArs) {
+    alert('No hay cotización cargada.');
+    return;
+  }
+
+  let tasa = usdToArs;
+  if (tipo === 'blue') tasa *= 1;
+  const ars = dolares * tasa;
+  conversionAPesosResultado.innerHTML = `<p>${dolares} USD ≈ ${ars.toFixed(2)} ARS (${tipo})</p>`;
+});
+
+// EURO
 convertirEuroBtn.addEventListener('click', () => {
-  const pesos = parseFloat(pesosEuroInput.value);
+  const pesos = Number(pesosEuroInput.value);
   const tipo = tipoEuroSelect.value;
-  const cotizacion = cotizacionesEuro[tipo];
+  const { eurToArs } = window._RATES || {};
 
-  if (!cotizacion) {
-    conversionEuroResultado.innerHTML = `<p style="color:red;">Esperando cotizaciones...</p>`;
-    return;
-  }
-  if (isNaN(pesos) || pesos <= 0) {
-    conversionEuroResultado.innerHTML = `<p style="color:red;">Ingresa un monto válido en pesos.</p>`;
+  if (!eurToArs) {
+    alert('No hay cotización del euro cargada.');
     return;
   }
 
-  const euros = pesos / cotizacion;
-  conversionEuroResultado.innerHTML = `
-    <p>${pesos.toFixed(2)} ARS equivalen a <strong>${euros.toFixed(2)} EUR</strong></p>
-    <p class="smallMuted">Usando cotización ${tipo} de $${cotizacion.toFixed(2)} ARS/EUR</p>
-  `;
+  let tasa = eurToArs;
+  if (tipo === 'blue') tasa *= 1;
+  const eur = pesos / tasa;
+  conversionEuroResultado.innerHTML = `<p>${pesos} ARS ≈ ${eur.toFixed(4)} EUR (${tipo})</p>`;
 });
 
-// Conversión de euros a pesos
 convertirAEurosBtn.addEventListener('click', () => {
-  const euros = parseFloat(eurosInput.value);
-  const tipo = tipoEuroSelect.value;
-  const cotizacion = cotizacionesEuro[tipo];
+  const euros = Number(eurosInput.value);
+  const { eurToArs } = window._RATES || {};
 
-  if (!cotizacion) {
-    conversionAEurosResultado.innerHTML = `<p style="color:red;">Esperando cotizaciones...</p>`;
-    return;
-  }
-  if (isNaN(euros) || euros <= 0) {
-    conversionAEurosResultado.innerHTML = `<p style="color:red;">Ingresa un monto válido en euros.</p>`;
+  if (!eurToArs) {
+    alert('No hay cotización del euro cargada.');
     return;
   }
 
-  const pesos = euros * cotizacion;
-  conversionAEurosResultado.innerHTML = `
-    <p>${euros.toFixed(2)} EUR equivalen a <strong>${pesos.toFixed(2)} ARS</strong></p>
-    <p class="smallMuted">Usando cotización ${tipo} de $${cotizacion.toFixed(2)} ARS/EUR</p>
-  `;
+  const ars = euros * eurToArs;
+  conversionAEurosResultado.innerHTML = `<p>${euros} EUR ≈ ${ars.toFixed(2)} ARS</p>`;
 });
 
-// Cargar cotizaciones del euro al iniciar
-obtenerCotizacionesEuro();
-
-// Ejecutar pruebas al final del script
-ejecutarPruebas();
+// === INICIO ===
+(function init() {
+  agregarBotonExportar();
+  renderHistorial();
+  obtenerCotizaciones();
+  setInterval(obtenerCotizaciones, 5 * 60 * 1000);
+})();
