@@ -1,6 +1,3 @@
-// js/main.js
-// Usa: axios (peticiones) y dayjs (fechas)
-
 // Tabla simple de interés según cuotas
 const INTERES_POR_CUOTAS = {
   3: 0.05,
@@ -9,7 +6,7 @@ const INTERES_POR_CUOTAS = {
   24: 0.20
 };
 
-// --- ELEMENTOS DOM ---
+// ELEMENTOS DOM
 const simuladorForm = document.getElementById('simuladorForm');
 const nombreInput = document.getElementById('nombre');
 const montoInput = document.getElementById('monto');
@@ -38,10 +35,10 @@ const eurosInput = document.getElementById('euros');
 const convertirAEurosBtn = document.getElementById('convertirAEurosBtn');
 const conversionAEurosResultado = document.getElementById('conversionAEurosResultado');
 
-// --- LOCAL STORAGE ---
+// LOCAL STORAGE
 const STORAGE_KEY = 'simulaciones_v1';
 
-// === FUNCIONES DE HISTORIAL ===
+// FUNCIONES DE HISTORIAL
 function guardarSimulacion(sim) {
   const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   arr.unshift(sim);
@@ -89,7 +86,7 @@ function borrarItem(index) {
   renderHistorial();
 }
 
-// === EXPORTAR HISTORIAL JSON ===
+// EXPORTAR HISTORIAL JSON
 function exportarHistorialJSON() {
   const historial = cargarHistorial();
   if (!historial.length) {
@@ -110,7 +107,7 @@ function exportarHistorialJSON() {
   URL.revokeObjectURL(url);
 }
 
-// === AGREGAR BOTÓN DE EXPORTAR AL DOM ===
+// AGREGAR BOTÓN DE EXPORTAR AL DOM
 function agregarBotonExportar() {
   if (!document.getElementById('exportarBtn')) {
     const exportarBtn = document.createElement('button');
@@ -132,7 +129,7 @@ limpiarBtn.addEventListener('click', () => {
   }
 });
 
-// === SIMULADOR ===
+// SIMULADOR
 simuladorForm.addEventListener('submit', (e) => {
   e.preventDefault();
   calcularSimulacion();
