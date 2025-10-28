@@ -186,5 +186,173 @@ function ejecutarPruebas(){
   });
   foot.appendChild(ul);
 }
+// === COTIZACIÓN DEL DÓLAR ===
+const dolarInfo = document.getElementById('dolarInfo');
+const tipoDolarSelect = document.getElementById('tipoDolar');
+const pesosInput = document.getElementById('pesos');
+const convertirBtn = document.getElementById('convertirBtn');
+const conversionResultado = document.getElementById('conversionResultado');
+
+const dolaresInput = document.getElementById('dolares');
+const convertirAPesosBtn = document.getElementById('convertirAPesosBtn');
+const conversionAPesosResultado = document.getElementById('conversionAPesosResultado');
+
+let cotizaciones = { oficial: 0, blue: 0 };
+
+// Obtener cotizaciones desde dolarapi.com
+async function obtenerCotizaciones() {
+  try {
+    const [oficialRes, blueRes] = await Promise.all([
+      fetch('https://dolarapi.com/v1/dolares/oficial'),
+      fetch('https://dolarapi.com/v1/dolares/blue')
+    ]);
+
+    const oficial = await oficialRes.json();
+    const blue = await blueRes.json();
+
+    cotizaciones.oficial = oficial.venta;
+    cotizaciones.blue = blue.venta;
+
+    dolarInfo.innerHTML = `
+      <p><strong>Dólar Oficial:</strong> $${oficial.venta.toFixed(2)} ARS</p>
+      <p><strong>Dólar Blue:</strong> $${blue.venta.toFixed(2)} ARS</p>
+      <p class="smallMuted">Última actualización: ${new Date(oficial.fechaActualizacion).toLocaleString()}</p>
+    `;
+  } catch (error) {
+    dolarInfo.innerHTML = `<p style="color:red;">No se pudieron obtener las cotizaciones.</p>`;
+    console.error('Error al obtener las cotizaciones:', error);
+  }
+}
+
+// Conversión de pesos a dólares
+convertirBtn.addEventListener('click', () => {
+  const pesos = parseFloat(pesosInput.value);
+  const tipo = tipoDolarSelect.value;
+  const cotizacion = cotizaciones[tipo];
+
+  if (!cotizacion) {
+    conversionResultado.innerHTML = `<p style="color:red;">Esperando cotizaciones...</p>`;
+    return;
+  }
+  if (isNaN(pesos) || pesos <= 0) {
+    conversionResultado.innerHTML = `<p style="color:red;">Ingresa un monto válido en pesos.</p>`;
+    return;
+  }
+
+  const dolares = pesos / cotizacion;
+  conversionResultado.innerHTML = `
+    <p>${pesos.toFixed(2)} ARS equivalen a <strong>${dolares.toFixed(2)} USD</strong></p>
+    <p class="smallMuted">Usando cotización ${tipo} de $${cotizacion.toFixed(2)} ARS/USD</p>
+  `;
+});
+
+// Conversión de dólares a pesos
+convertirAPesosBtn.addEventListener('click', () => {
+  const dolares = parseFloat(dolaresInput.value);
+  const tipo = tipoDolarSelect.value;
+  const cotizacion = cotizaciones[tipo];
+
+  if (!cotizacion) {
+    conversionAPesosResultado.innerHTML = `<p style="color:red;">Esperando cotizaciones...</p>`;
+    return;
+  }
+  if (isNaN(dolares) || dolares <= 0) {
+    conversionAPesosResultado.innerHTML = `<p style="color:red;">Ingresa un monto válido en dólares.</p>`;
+    return;
+  }
+
+  const pesos = dolares * cotizacion;
+  conversionAPesosResultado.innerHTML = `
+    <p>${dolares.toFixed(2)} USD equivalen a <strong>${pesos.toFixed(2)} ARS</strong></p>
+    <p class="smallMuted">Usando cotización ${tipo} de $${cotizacion.toFixed(2)} ARS/USD</p>
+  `;
+});
+
+// Cargar cotizaciones al iniciar
+obtenerCotizaciones();
+
+// === COTIZACIÓN DEL EURO ===
+const euroInfo = document.getElementById('euroInfo');
+const tipoEuroSelect = document.getElementById('tipoEuro');
+const pesosEuroInput = document.getElementById('pesosEuro');
+const convertirEuroBtn = document.getElementById('convertirEuroBtn');
+const conversionEuroResultado = document.getElementById('conversionEuroResultado');
+
+const eurosInput = document.getElementById('euros');
+const convertirAEurosBtn = document.getElementById('convertirAEurosBtn');
+const conversionAEurosResultado = document.getElementById('conversionAEurosResultado');
+
+let cotizacionesEuro = { oficial: 0, blue: 0 };
+
+// Obtener cotizaciones del euro
+async function obtenerCotizacionesEuro() {
+  try {
+    const res = await fetch('https://api.bluelytics.com.ar/v2/latest');
+    const data = await res.json();
+
+    const euroOficial = data.oficial_euro.value_sell;
+    const euroBlue = data.blue_euro.value_sell;
+
+    cotizacionesEuro.oficial = euroOficial;
+    cotizacionesEuro.blue = euroBlue;
+
+    euroInfo.innerHTML = `
+      <p><strong>Euro Oficial:</strong> $${euroOficial.toFixed(2)} ARS</p>
+      <p><strong>Euro Blue:</strong> $${euroBlue.toFixed(2)} ARS</p>
+      <p class="smallMuted">Fuente: bluelytics.com.ar</p>
+    `;
+  } catch (error) {
+    euroInfo.innerHTML = `<p style="color:red;">No se pudieron obtener las cotizaciones del euro.</p>`;
+    console.error('Error al obtener las cotizaciones del euro:', error);
+  }
+}
+
+// Conversión de pesos a euros
+convertirEuroBtn.addEventListener('click', () => {
+  const pesos = parseFloat(pesosEuroInput.value);
+  const tipo = tipoEuroSelect.value;
+  const cotizacion = cotizacionesEuro[tipo];
+
+  if (!cotizacion) {
+    conversionEuroResultado.innerHTML = `<p style="color:red;">Esperando cotizaciones...</p>`;
+    return;
+  }
+  if (isNaN(pesos) || pesos <= 0) {
+    conversionEuroResultado.innerHTML = `<p style="color:red;">Ingresa un monto válido en pesos.</p>`;
+    return;
+  }
+
+  const euros = pesos / cotizacion;
+  conversionEuroResultado.innerHTML = `
+    <p>${pesos.toFixed(2)} ARS equivalen a <strong>${euros.toFixed(2)} EUR</strong></p>
+    <p class="smallMuted">Usando cotización ${tipo} de $${cotizacion.toFixed(2)} ARS/EUR</p>
+  `;
+});
+
+// Conversión de euros a pesos
+convertirAEurosBtn.addEventListener('click', () => {
+  const euros = parseFloat(eurosInput.value);
+  const tipo = tipoEuroSelect.value;
+  const cotizacion = cotizacionesEuro[tipo];
+
+  if (!cotizacion) {
+    conversionAEurosResultado.innerHTML = `<p style="color:red;">Esperando cotizaciones...</p>`;
+    return;
+  }
+  if (isNaN(euros) || euros <= 0) {
+    conversionAEurosResultado.innerHTML = `<p style="color:red;">Ingresa un monto válido en euros.</p>`;
+    return;
+  }
+
+  const pesos = euros * cotizacion;
+  conversionAEurosResultado.innerHTML = `
+    <p>${euros.toFixed(2)} EUR equivalen a <strong>${pesos.toFixed(2)} ARS</strong></p>
+    <p class="smallMuted">Usando cotización ${tipo} de $${cotizacion.toFixed(2)} ARS/EUR</p>
+  `;
+});
+
+// Cargar cotizaciones al iniciar
+obtenerCotizacionesEuro();
+
 
 ejecutarPruebas();

@@ -193,3 +193,31 @@ button:focus {
   margin: 0;
   padding: 0;
 }
+
+/* === NUEVO: layout para tarjetas de cotización === */
+.cotizaciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 1.5rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+/* Asegura que ambas tarjetas tengan la misma altura y distribución */
+.cotizacion-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-self: stretch;
+}
+
+.cotizacion-card .actions {
+  margin-top: auto;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .cotizaciones {
+    grid-template-columns: 1fr;
+  }
+}
