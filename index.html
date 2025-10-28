@@ -8,142 +8,169 @@
 </head>
 <body>
   <main class="container">
+    <!-- CABECERA -->
     <header>
       <h1>Simulador de Préstamos</h1>
-      <p>Calcula el monto total a pagar y el valor de las cuotas. Los resultados se guardan en <strong>localStorage</strong>.</p>
+      <p>
+        Calcula el monto total a pagar y el valor de las cuotas. 
+        Los resultados se guardan en <strong>localStorage</strong>.
+      </p>
     </header>
 
-<section class="card">
-  <form id="simuladorForm" class="form">
-    <div class="field">
-      <label for="nombre">Nombre</label>
-      <input id="nombre" name="nombre" type="text" placeholder="Tu nombre" required />
+    <!-- FORMULARIO PRINCIPAL -->
+    <section class="card">
+      <form id="simuladorForm" class="form">
+        <!-- Campo: nombre del usuario -->
+        <div class="field">
+          <label for="nombre">Nombre</label>
+          <input id="nombre" name="nombre" type="text" placeholder="Tu nombre" required />
+        </div>
+
+        <!-- Campo: monto solicitado -->
+        <div class="field">
+          <label for="monto">Monto solicitado ($)</label>
+          <input id="monto" name="monto" type="number" min="0" step="0.01" placeholder="10000" required />
+        </div>
+
+        <!-- Campo: cantidad de cuotas -->
+        <div class="field">
+          <label for="cuotas">Cantidad de cuotas</label>
+          <select id="cuotas" name="cuotas" required>
+            <option value="">-- elegir --</option>
+            <option value="3">3 cuotas</option>
+            <option value="6">6 cuotas</option>
+            <option value="12">12 cuotas</option>
+            <option value="24">24 cuotas</option>
+          </select>
+        </div>
+
+        <!-- Botones: calcular y limpiar -->
+        <div class="actions">
+          <button type="submit" id="calcularBtn" class="btn btn-primary">Calcular</button>
+          <button type="button" id="limpiarBtn" class="btn btn-secondary">Limpiar historial</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- RESULTADO DEL CÁLCULO -->
+    <section class="results card">
+      <h2>Resultado</h2>
+      <div id="resultadoContainer" class="resultadoContainer">
+        <!-- Mensaje por defecto antes de realizar una simulación -->
+        <p class="placeholder">Aún no se ha realizado ninguna simulación.</p>
+      </div>
+    </section>
+
+    <!-- HISTORIAL DE SIMULACIONES -->
+    <section class="history card">
+      <h2>Historial de simulaciones</h2>
+      <!-- Aquí se cargan dinámicamente los registros guardados en localStorage -->
+      <ul id="historialList" class="historialList"></ul>
+    </section>
+
+    <!-- COTIZACIONES (Dólar y Euro) -->
+    <div class="cotizaciones">
+      <!-- ===== COTIZACIÓN DEL DÓLAR ===== -->
+      <section class="card cotizacion-card" id="cotizacion">
+        <h2>Cotización del Dólar (ARS)</h2>
+
+        <!-- Contenedor para mostrar la información obtenida desde la API -->
+        <div id="dolarInfo" class="resultadoContainer">
+          <p class="placeholder">Obteniendo cotizaciones...</p>
+        </div>
+
+        <!-- Selector de tipo de dólar -->
+        <div class="field" style="margin-top: 1rem;">
+          <label for="tipoDolar">Seleccionar tipo de dólar</label>
+          <select id="tipoDolar">
+            <option value="oficial">Dólar Oficial</option>
+            <option value="blue">Dólar Blue</option>
+          </select>
+        </div>
+
+        <!-- Conversor de pesos a dólares -->
+        <div class="field" style="margin-top: 1rem;">
+          <label for="pesos">Convertir pesos a dólares</label>
+          <input id="pesos" type="number" placeholder="Monto en ARS" min="0" />
+        </div>
+
+        <div class="actions">
+          <button id="convertirBtn" class="btn btn-primary">Convertir a USD</button>
+        </div>
+
+        <div id="conversionResultado" class="resultadoContainer"></div>
+
+        <!-- Separador visual -->
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #ddd;" />
+
+        <!-- Conversor de dólares a pesos -->
+        <div class="field">
+          <label for="dolares">Convertir dólares a pesos</label>
+          <input id="dolares" type="number" placeholder="Monto en USD" min="0" />
+        </div>
+
+        <div class="actions">
+          <button id="convertirAPesosBtn" class="btn btn-secondary">Convertir a ARS</button>
+        </div>
+
+        <div id="conversionAPesosResultado" class="resultadoContainer"></div>
+      </section>
+
+      <!-- COTIZACIÓN DEL EURO -->
+      <section class="card cotizacion-card" id="cotizacion-euro">
+        <h2>Cotización del Euro (ARS)</h2>
+
+        <!-- Contenedor para mostrar datos obtenidos desde la API -->
+        <div id="euroInfo" class="resultadoContainer">
+          <p class="placeholder">Obteniendo cotizaciones...</p>
+        </div>
+
+        <!-- Selector de tipo de euro -->
+        <div class="field" style="margin-top: 1rem;">
+          <label for="tipoEuro">Seleccionar tipo de euro</label>
+          <select id="tipoEuro">
+            <option value="oficial">Euro Oficial</option>
+            <option value="blue">Euro Blue</option>
+          </select>
+        </div>
+
+        <!-- Conversor de pesos a euros -->
+        <div class="field" style="margin-top: 1rem;">
+          <label for="pesosEuro">Convertir pesos a euros</label>
+          <input id="pesosEuro" type="number" placeholder="Monto en ARS" min="0" />
+        </div>
+
+        <div class="actions">
+          <button id="convertirEuroBtn" class="btn btn-primary">Convertir a EUR</button>
+        </div>
+
+        <div id="conversionEuroResultado" class="resultadoContainer"></div>
+
+        <!-- Separador visual -->
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #ddd;" />
+
+        <!-- Conversor de euros a pesos -->
+        <div class="field">
+          <label for="euros">Convertir euros a pesos</label>
+          <input id="euros" type="number" placeholder="Monto en EUR" min="0" />
+        </div>
+
+        <div class="actions">
+          <button id="convertirAEurosBtn" class="btn btn-secondary">Convertir a ARS</button>
+        </div>
+
+        <div id="conversionAEurosResultado" class="resultadoContainer"></div>
+      </section>
     </div>
 
-    <div class="field">
-      <label for="monto">Monto solicitado ($)</label>
-      <input id="monto" name="monto" type="number" min="0" step="0.01" placeholder="10000" required />
-    </div>
+    <!-- PIE DE PÁGINA -->
+    <footer class="foot">
+      <small>Curso javascript - Entrega final</small>
+    </footer>
+  </main>
 
-    <div class="field">
-      <label for="cuotas">Cantidad de cuotas</label>
-      <select id="cuotas" name="cuotas" required>
-        <option value="">-- elegir --</option>
-        <option value="3">3 cuotas</option>
-        <option value="6">6 cuotas</option>
-        <option value="12">12 cuotas</option>
-        <option value="24">24 cuotas</option>
-      </select>
-    </div>
-
-    <div class="actions">
-      <button type="submit" id="calcularBtn" class="btn btn-primary">Calcular</button>
-      <button type="button" id="limpiarBtn" class="btn btn-secondary">Limpiar historial</button>
-    </div>
-  </form>
-</section>
-
-<section class="results card" aria-live="polite">
-  <h2>Resultado</h2>
-  <div id="resultadoContainer" class="resultadoContainer">
-    <p class="placeholder">Aún no se ha realizado ninguna simulación.</p>
-  </div>
-</section>
-
-<section class="history card">
-  <h2>Historial de simulaciones</h2>
-  <ul id="historialList" class="historialList"></ul>
-</section>
-
-<!-- NUEVO: contenedor para las dos tarjetas de cotización -->
-<div class="cotizaciones">
-  <!-- === COTIZACIÓN DEL DÓLAR === -->
-  <section class="card cotizacion-card" id="cotizacion">
-    <h2>Cotización del Dólar (ARS)</h2>
-
-    <div id="dolarInfo" class="resultadoContainer">
-      <p class="placeholder">Obteniendo cotizaciones...</p>
-    </div>
-
-    <div class="field" style="margin-top: 1rem;">
-      <label for="tipoDolar">Seleccionar tipo de dólar</label>
-      <select id="tipoDolar">
-        <option value="oficial">Dólar Oficial</option>
-        <option value="blue">Dólar Blue</option>
-      </select>
-    </div>
-
-    <div class="field" style="margin-top: 1rem;">
-      <label for="pesos">Convertir pesos a dólares</label>
-      <input id="pesos" type="number" placeholder="Monto en ARS" min="0" />
-    </div>
-
-    <div class="actions">
-      <button id="convertirBtn" class="btn btn-primary">Convertir a USD</button>
-    </div>
-
-    <div id="conversionResultado" class="resultadoContainer"></div>
-
-    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #ddd;" />
-
-    <div class="field">
-      <label for="dolares">Convertir dólares a pesos</label>
-      <input id="dolares" type="number" placeholder="Monto en USD" min="0" />
-    </div>
-
-    <div class="actions">
-      <button id="convertirAPesosBtn" class="btn btn-secondary">Convertir a ARS</button>
-    </div>
-
-    <div id="conversionAPesosResultado" class="resultadoContainer"></div>
-  </section>
-
-  <!-- === COTIZACIÓN DEL EURO === -->
-  <section class="card cotizacion-card" id="cotizacion-euro">
-    <h2>Cotización del Euro (ARS)</h2>
-
-    <div id="euroInfo" class="resultadoContainer">
-      <p class="placeholder">Obteniendo cotizaciones...</p>
-    </div>
-
-    <div class="field" style="margin-top: 1rem;">
-      <label for="tipoEuro">Seleccionar tipo de euro</label>
-      <select id="tipoEuro">
-        <option value="oficial">Euro Oficial</option>
-        <option value="blue">Euro Blue</option>
-      </select>
-    </div>
-
-    <div class="field" style="margin-top: 1rem;">
-      <label for="pesosEuro">Convertir pesos a euros</label>
-      <input id="pesosEuro" type="number" placeholder="Monto en ARS" min="0" />
-    </div>
-
-    <div class="actions">
-      <button id="convertirEuroBtn" class="btn btn-primary">Convertir a EUR</button>
-    </div>
-
-    <div id="conversionEuroResultado" class="resultadoContainer"></div>
-
-    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #ddd;" />
-
-    <div class="field">
-      <label for="euros">Convertir euros a pesos</label>
-      <input id="euros" type="number" placeholder="Monto en EUR" min="0" />
-    </div>
-
-    <div class="actions">
-      <button id="convertirAEurosBtn" class="btn btn-secondary">Convertir a ARS</button>
-    </div>
-
-    <div id="conversionAEurosResultado" class="resultadoContainer"></div>
-  </section>
-</div>
-
-<footer class="foot">
-  <small>Curso javascript - Entrega final</small>
-</footer>
-
+  <!-- ARCHIVO JAVASCRIPT -->
+  <!-- Contiene la lógica del simulador y las funciones para el manejo de localStorage y APIs -->
   <script src="js/main.js"></script>
 </body>
 </html>

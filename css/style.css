@@ -1,18 +1,25 @@
+/* VARIABLES Y CONFIGURACIÓN GLOBAL */
 :root {
   --bg: #f7f9f2;
   --card: #ffffff;
-  --accent: #5c6527;
+  --accent: #454d1c;
   --muted: #6b6b6b;
   --glass: rgba(92, 101, 39, 0.06);
   --radius: 10px;
+
+  /* Escala de colores de texto para consistencia */
+  --text-main: #222;
+  --text-muted: #555;
+  --text-light: #777;
 }
 
 * { box-sizing: border-box; }
 
+/* ESTRUCTURA GENERAL */
 body {
   font-family: Inter, Roboto, Arial, sans-serif;
   background: linear-gradient(180deg, var(--bg), #fff);
-  color: #222;
+  color: var(--text-main);
   margin: 0;
   padding: 2rem;
   display: flex;
@@ -28,11 +35,13 @@ body {
 }
 
 header { margin-bottom: 1rem; }
+
 h1 {
   color: var(--accent);
   margin: 0 0 .25rem 0;
 }
 
+/* TARJETAS Y BLOQUES PRINCIPALES */
 .card {
   background: var(--card);
   border-radius: var(--radius);
@@ -41,8 +50,8 @@ h1 {
   margin-bottom: 1rem;
 }
 
-.results.card,
-.history.card {
+/* Sección reutilizable para resultados e historial */
+.card.seccion {
   min-height: 150px;
   display: flex;
   flex-direction: column;
@@ -50,12 +59,15 @@ h1 {
   text-align: center;
 }
 
+/* FORMULARIOS */
 .form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
+
 .field { display: flex; flex-direction: column; }
+
 label {
   font-weight: 600;
   font-size: .9rem;
@@ -70,12 +82,14 @@ input, select {
   font-size: 1rem;
   transition: border 0.2s, box-shadow 0.2s;
 }
+
 input:focus, select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(92, 101, 39, 0.2);
   outline: none;
 }
 
+/* BOTONES */
 .actions {
   display: flex;
   gap: .7rem;
@@ -92,31 +106,37 @@ button {
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
 }
+
 button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
+
 button:active { transform: scale(0.97); }
+
 button:focus {
   outline: 3px solid rgba(92,101,39,0.4);
   outline-offset: 2px;
 }
 
+/* Botones principales y secundarios */
+.btn-primary, .btn-secondary {
+  color: #fff;
+}
+
 .btn-primary {
   background: var(--accent);
-  color: #fff;
 }
 .btn-primary:hover { background: #49501f; }
 
 .btn-secondary {
   background: #555;
-  color: #fff;
 }
 .btn-secondary:hover { background: #333; }
 
-.results h2, .history h2 { margin-top: 0; }
+/* RESULTADOS E HISTORIAL */
 .resultadoContainer { padding: .5rem; }
-.placeholder { color: #666; }
+.placeholder { color: var(--text-light); }
 
 .historialList {
   list-style: none;
@@ -128,17 +148,24 @@ button:focus {
   max-height: 260px;
   overflow: auto;
 }
+
+/* Efecto “glass” reutilizable */
+.glass {
+  background: var(--glass);
+  border: 1px solid rgba(0,0,0,0.03);
+  border-radius: var(--radius);
+}
+
 .histItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: .6rem;
-  border-radius: 8px;
-  background: var(--glass);
-  border: 1px solid rgba(0,0,0,0.03);
 }
+
 .histMeta { font-size: .9rem; }
-.smallMuted { font-size: .85rem; color: #555; }
+.smallMuted { font-size: .85rem; color: var(--text-muted); }
+
 .removeBtn {
   background: transparent;
   border: 1px solid #c33;
@@ -148,53 +175,21 @@ button:focus {
   cursor: pointer;
 }
 
+/* PIE Y DETALLES */
 .foot {
   text-align: center;
-  color: #666;
+  color: var(--text-light);
   margin-top: 1rem;
 }
 
-@media (max-width: 992px) {
-  .container { max-width: 95%; }
-}
-
-@media (max-width: 768px) {
-  body { padding: 1rem; }
-  h1 { font-size: 1.8rem; }
-  .form { grid-template-columns: 1fr 1fr; }
-  .actions {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-  button { flex: 1 1 auto; }
-}
-
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.5rem;
-    text-align: center;
-  }
-  header p {
-    font-size: 0.9rem;
-    text-align: center;
-  }
-  .form { grid-template-columns: 1fr; }
-  .actions {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  button { width: 100%; }
-  .historialList { max-height: 200px; }
-}
-
-.foot ul.smallMuted {
+.foot ul {
   text-align: right;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-/* === NUEVO: layout para tarjetas de cotización === */
+/* COTIZACIONES */
 .cotizaciones {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -203,21 +198,58 @@ button:focus {
   width: 100%;
 }
 
-/* Asegura que ambas tarjetas tengan la misma altura y distribución */
+/* Mantiene altura pareja en tarjetas */
 .cotizacion-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-self: stretch;
 }
 
 .cotizacion-card .actions {
   margin-top: auto;
 }
 
-/* Responsivo */
+/* RESPONSIVE DESIGN */
+@media (max-width: 992px) {
+  .container { max-width: 95%; }
+}
+
 @media (max-width: 768px) {
-  .cotizaciones {
-    grid-template-columns: 1fr;
+  body { padding: 1rem; }
+  h1 { font-size: 1.8rem; }
+
+  .form { grid-template-columns: 1fr 1fr; }
+
+  .actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
+
+  button { flex: 1 1 auto; }
+
+  /* Cotizaciones en una columna */
+  .cotizaciones { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  header p {
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .form { grid-template-columns: 1fr; }
+
+  .actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  button { width: 100%; }
+
+  .historialList { max-height: 200px; }
 }
